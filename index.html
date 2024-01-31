@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <!-- <script src="https://unpkg.com/vue@next"></script> -->
+    <script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/vant.js"></script>
+    <link rel="stylesheet" href="css/vant.css" />
+    <script
+      src="js/CSInterface.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <script src="js/main.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="css/init.css" />
+  </head>
+  <body>
+    <div id="app">
+      <van-row justify="center" align="center" id="search">
+        <van-search
+          v-model="searchFontName"
+          placeholder="请输入字体名"
+          shape="round"
+          clearable
+          style="flex: 1"
+          background="#515151"
+          @search="searchFontFun()"
+          @clear="clearSarchFontFun()"
+        >
+        </van-search>
+      </van-row>
+
+      <van-row id="tabs" justify="center" align="top">
+        <van-col v-for="tag in tagList">
+          <van-tag
+            id="tag"
+            round
+            size="medium"
+            :key="tag"
+            @click="toggleTab(tag)"
+            :style="tag.dynamicStyle"
+          >
+            {{ tag.name }}
+          </van-tag>
+        </van-col>
+      </van-row>
+
+      <van-list id="list-container" loading="false" finished="true">
+        <van-cell
+          id="list-cell"
+          v-for="fontObj in fontList"
+          v-show="fontObj._visiable"
+          :key="fontObj"
+          @contextmenu.prevent="selectFontFun(fontObj)"
+          @click="appleyFont(fontObj)"
+        >
+          <van-row>
+            <span style="font-size: 8px">字体名:{{fontObj.name}}</span>
+            <span
+              style="font-size: 8px; margin-left: 10px"
+              v-if="fontObj.aliasNmae"
+              >别名:{{fontObj.aliasNmae}}</span
+            >
+          </van-row>
+          <h1 :style="fontObj.fontStyle" id="showFont">
+            {{previewText?previewText:'ABCabc1234'}}
+          </h1>
+        </van-cell>
+      </van-list>
+
+      <div id="preview">
+        <van-cell-group inset id="previewText">
+          <!-- 输入任意文本 -->
+          <van-field
+            v-model="previewText"
+            placeholder="预览文字"
+          />
+        </van-cell-group>
+      </div>
+
+      <van-dialog
+        :show="showFontTagDialogFlag"
+        title="设置标签"
+        show-confirm-button
+        @confirm="tagDialogConfirm()"
+      >
+        <van-row justify="center" align="center">
+          <van-cell>
+            <van-field
+              v-model="tagDialogName"
+              placeholder="请输入标签"
+              @keydown.enter="tagDialogNameEnter()"
+            />
+          </van-cell>
+
+          <van-row justify="center" align="top">
+            <van-col v-for="tag in tagDialogTags" style="margin: 10px">
+              <van-tag
+                closeable
+                round
+                size="medium"
+                :key="tag"
+                @close="tagDialogTagClose(tag)"
+              >
+                {{ tag }}
+              </van-tag>
+            </van-col>
+          </van-row>
+        </van-row>
+      </van-dialog>
+    </div>
+  </body>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          userDataPath: "",
+          extPath: "",
+          showFontTagDialogFlag: false,
+          tagDialogName: "",
+          tagDialogTags: [],
+          //预览字体大小
+          fontSize: 18,
+          //预览
+          previewText: "",
+          //搜索字体
+          searchFontName: "",
+          //字体
+          fontList: [],
+          fontObj: {
+            name: "",
+            family: "",
+            style: "",
+            postScriptName: "",
+            tags: [],
+            aliasNmae: "",
+            _visiable: true,
+            fontStyle: "",
+            selected: false,
+          },
+          //标签
+          tagList: [],
+          tagObj: {
+            name: "",
+            dynamicStyle: "#0a72c5",
+            selected: false,
+            order: 0
+          },
+          //选择的标签
+          selectTagNames: [],
+          //选择的字体
+          selectFonts: [],
+        };
+      },
+      methods: {
+        //选择标签
+        toggleTab(tag) {
+          tag.dynamicStyle = tag.selected
+            ? { backgroundColor: "#0a72c5" }
+            : { backgroundColor: "#0a54f5" };
+
+          tag.selected = !tag.selected;
+
+          if (!tag.selected) {
+            this.selectTagNames = this.selectTagNames.filter(
+              (sTagName) => sTagName !== tag.name
+            );
+          }
+
+          if (tag.selected) {
+            this.selectTagNames.push(tag.name);
+          }
+
+          selectTags(this.fontList, this.selectTagNames);
+        },
+        //选择字体
+        selectFontFun(fontObj) {
+          this.selectFonts.push(fontObj);
+          this.tagDialogTags = JSON.parse(JSON.stringify(fontObj.tags));
+          this.showFontTagDialogFlag = true;
+        },
+        //删除对话框里面标签
+        tagDialogTagClose(tag) {
+          this.tagDialogTags = this.tagDialogTags.filter(
+            (item) => item !== tag
+          );
+        },
+        //对话框回车
+        tagDialogNameEnter() {
+          this.tagDialogTags.push(this.tagDialogName);
+          this.tagDialogName = "";
+        },
+        //确定
+        tagDialogConfirm() {
+          setSelectFontTags(this.selectFonts, this.tagDialogTags);
+          this.tagList = [];
+          this.selectFonts = [];
+          this.tagDialogTags = [];
+          this.tagDialogName = "";
+          this.showFontTagDialogFlag = false;
+          readFontTags(this.fontList, this.tagList, this.tagObj);
+          saveFontFileJson(this.fontList);
+        },
+        //应用字体
+        appleyFont(fontObj) {
+          appleyFont(fontObj);
+        },
+        //搜索字体
+        searchFontFun() {
+          searchFont(this.fontList, this.searchFontName);
+        },
+        //清除搜索
+        clearSarchFontFun() {
+          this.searchFontName = "";
+        },
+      },
+      mounted: function () {
+        //读取系统字体
+        readSystemFont((fontJsonList) => {
+          for (let i = 0; i < fontJsonList.length; i++) {
+            let fontJsonObj = fontJsonList.list[i];
+            if (!fontJsonObj.name) {
+              continue;
+            }
+
+            let fobj = { ...this.fontObj };
+            fobj.name = fontJsonObj.name;
+            fobj.family = fontJsonObj.family;
+            fobj.postScriptName = fontJsonObj.postScriptName;
+            fobj.style = fontJsonObj.style;
+            fobj.fontStyle = { fontFamily: fobj.family };
+
+            this.fontList.push(fobj);
+          }
+
+          readUserConfig(this.fontList);
+
+          readFontTags(this.fontList, this.tagList, this.tagObj);
+        });
+      },
+    });
+    app.use(vant);
+    app.use(CSInterface);
+
+    app.mount("#app");
+  </script>
+</html>

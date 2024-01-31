@@ -1,0 +1,86 @@
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+html {
+  height: 100%;
+
+  background-color: #515151;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  background-color: #515151;
+  height: 100%;
+}
+
+#app {
+  background-color: #515151;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#search {
+  margin-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#tabs {
+  margin-top: 20px;
+}
+
+#tabs #tag {
+  cursor: pointer;
+  margin: 5px;
+  background-color: #0a72c5;
+}
+
+#list-container {
+  flex: 1;
+  overflow-y: auto;
+  flex-direction: column;
+  margin: 10px;
+}
+
+/* 隐藏滚动条 */
+#list-container::-webkit-scrollbar {
+  width: 0.5em;
+}
+
+#list-container::-webkit-scrollbar-thumb {
+  background-color: #999;
+}
+
+#list-container::-webkit-scrollbar-track {
+  background-color: #eee;
+}
+
+#list-cell {
+  background-color: #515151;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  height: auto;
+}
+
+#preview {
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  margin-top: 20px;
+}
+
+
+#showFont{
+    text-align: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: none;
+    color: #fff;
+}
